@@ -1,52 +1,106 @@
 import React, { useState, useEffect } from 'react';
+import { cacheFetch } from '../utils/api';
 import AnimeCard from '../components/AnimeCard';
-import { fetchWithRetry } from '../utils/api';
 
-export default function Upcoming({ onOpenAnime }) {
+const UPCOMING_QUERY = `
+query ($season: MediaSeason, $seasonYear: Int) {
+  Page(page: 1, perPage: 20) {
+    media(type: ANIME, season: $season, seasonYear: $seasonYear, sort: TRENDING_DESC) {
+      id
+      title {
+        romaji
+        english
+        native
+      }
+      coverImage {
+        extraLarge
+        large
+      }
+      description
+      episodes
+      status
+      averageScore
+      genres
+      type
+    }
+  }
+}
+`;
+
+export default function Upcoming({ onOpenAnime, titleLang }) {
+  const [animeList, setAnimeList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [animeData, setAnimeData] = useState([]);
 
   useEffect(() => {
-    const fetchUpcoming = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchWithRetry('https://api.jikan.moe/v4/seasons/upcoming?filter=tv');
-        setAnimeData(data.data || []);
-      } catch (err) {
-        console.error("Upcoming Fetch Error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchUpcoming();
   }, []);
 
-  return (
-    <div>
-      <h2 className="text-3xl font-black flex items-center gap-3 italic tracking-tighter uppercase mb-10">
-        <span className="w-2 h-8 bg-primary rounded-full" />
-        Latest Upcoming
-      </h2>
+  const fetchUpcoming = async () => {
+    try {
+      setLoading(true);
+      const now = new Date();
+      let year = now.getFullYear();
+      let month = now.getMonth();
       
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="aspect-[3/4] bg-white/5 rounded-[2.5rem] animate-pulse" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {animeData.map((anime, idx) => (
-            <AnimeCard 
-              key={`card-${anime.mal_id}-${idx}`} 
-              anime={anime} 
-              index={idx}
-              variant="grid"
-              onOpen={() => onOpenAnime(anime)}
-            />
-          ))}
-        </div>
-      )}
+      // Calculate next season
+      let season = 'WINTER';
+      if (month >= 0 && month <= 2) season = 'SPRING';
+      else if (month >= 3 && month <= 5) season = 'SUMMER';
+      else if (month >= 6 && month <= 8) season = 'FALL';
+      else {
+        season = 'WINTER';
+        year += 1;
+      }
+
+      const res = await cacheFetch('https://graphql.anilist.co', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: UPCOMING_QUERY,
+          variables: { season, seasonYear: year }
+        })
+      }, `anilist_upcoming_${season}_${year}`);
+
+      if (res?.data?.data) {
+        setAnimeList(res.data.data.Page.media);
+      }
+    } catch (err) {
+      console.error("Error fetching AniList upcoming data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-2">
+      <div className="mb-12">
+        <h2 className="text-4xl font-black italic tracking-tighter uppercase gradient-text mb-4">
+          Upcoming Season
+        </h2>
+        <p className="text-text-muted font-bold tracking-widest uppercase text-xs">
+          Discover what's coming next in the world of anime
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+        {animeList.map((anime, idx) => (
+          <AnimeCard 
+            key={anime.id} 
+            anime={anime} 
+            index={idx} 
+            onOpen={() => onOpenAnime(anime)} 
+            titleLang={titleLang}
+          />
+        ))}
+      </div>
     </div>
   );
 }

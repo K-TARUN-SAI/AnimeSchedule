@@ -1,12 +1,23 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { RefreshCw } from 'lucide-react';
-import { convertToIST } from '../utils/api';
+import { X, Play, Star, Clock, Calendar, Heart } from 'lucide-react';
 
-export default function AnimeModal({ anime, onClose }) {
-  const istInfo = anime.broadcast?.day && anime.broadcast?.time 
-    ? convertToIST(anime.broadcast.day, anime.broadcast.time)
-    : null;
+export default function AnimeModal({ anime, onClose, titleLang = 'en' }) {
+  const getTitle = () => {
+    if (titleLang === 'en') return anime.title.english || anime.title.romaji;
+    return anime.title.romaji || anime.title.native;
+  };
+
+  const stripHtml = (html) => {
+    if (!html) return '';
+    return html.replace(/<[^>]*>?/gm, '');
+  };
+
+  const handleWatch = () => {
+    const titleToSearch = (anime.title.english || anime.title.romaji || '').trim();
+    const query = encodeURIComponent(titleToSearch);
+    window.open(`https://kaido.to/search?keyword=${query}`, '_blank');
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10">
@@ -22,82 +33,94 @@ export default function AnimeModal({ anime, onClose }) {
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="relative w-full max-w-5xl max-h-[90vh] bg-slate-900/60 backdrop-blur-2xl rounded-[3rem] overflow-hidden flex flex-col md:flex-row shadow-2xl border border-white/10"
+        className="relative w-full max-w-5xl max-h-[90vh] bg-background/60 backdrop-blur-2xl rounded-[3rem] overflow-hidden flex flex-col md:flex-row shadow-2xl border border-border"
       >
         <button
           onClick={onClose}
-          className="absolute top-8 right-8 z-10 w-12 h-12 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/10 hover:bg-primary transition-all group"
+          className="absolute top-8 right-8 z-10 w-12 h-12 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center border border-white/10 hover:bg-primary transition-all text-white group"
         >
-          <RefreshCw className="w-6 h-6 transition-transform group-hover:rotate-180" />
+          <X className="w-6 h-6 transition-transform group-hover:scale-110" />
         </button>
 
-        <div className="w-full md:w-2/5 relative h-64 md:h-auto">
+        <div className="w-full md:w-2/5 relative h-64 md:h-auto overflow-hidden">
           <img
-            src={anime.images.webp.large_image_url}
-            alt={anime.title}
+            src={anime.coverImage.extraLarge || anime.coverImage.large}
+            alt={getTitle()}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 md:hidden" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background md:hidden" />
           <div className="absolute inset-x-0 bottom-0 p-8 md:hidden">
              <h2 className="text-3xl font-black uppercase italic tracking-tighter">
-                {anime.title_english || anime.title}
+                {getTitle()}
              </h2>
           </div>
         </div>
 
-        <div className="w-full md:w-3/5 p-8 md:p-16 overflow-y-auto custom-scrollbar">
+        <div className="w-full md:w-3/5 p-8 md:p-16 overflow-y-auto custom-scrollbar bg-background/40">
           <div className="flex gap-3 mb-6">
             <span className="px-4 py-1.5 bg-primary/20 text-primary rounded-xl text-xs font-black border border-primary/20 uppercase">
-              {anime.type}
+              {anime.type || anime.format}
             </span>
-            <span className="px-4 py-1.5 bg-white/5 text-gray-400 rounded-xl text-xs font-black border border-white/5 uppercase">
+            <span className="px-4 py-1.5 bg-white/5 text-text-muted rounded-xl text-xs font-black border border-border uppercase">
               {anime.status}
             </span>
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-black mb-4 uppercase italic tracking-tighter leading-none hidden md:block">
-            {anime.title_english || anime.title}
+          <h2 className="text-4xl md:text-5xl font-black mb-4 uppercase italic tracking-tighter leading-none hidden md:block text-text">
+            {getTitle()}
           </h2>
-          <h4 className="text-gray-500 font-bold mb-10 italic uppercase text-sm tracking-widest hidden md:block">
-            {anime.title !== (anime.title_english || anime.title) ? anime.title : ''}
+          <h4 className="text-text-muted font-bold mb-10 italic uppercase text-sm tracking-widest hidden md:block">
+            {anime.title.native}
           </h4>
 
-          <div className="grid grid-cols-2 gap-10 mb-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
             <div>
-              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 italic">Score</p>
-              <p className="text-3xl font-black text-yellow-500 flex items-center gap-2">
-                <span className="text-xs">★</span> {anime.score || '8.5'}
+              <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-2 italic">Score</p>
+              <p className="text-2xl font-black text-yellow-500 flex items-center gap-2">
+                <Star className="w-4 h-4 fill-current" /> {anime.averageScore ? (anime.averageScore / 10).toFixed(1) : '8.5'}
               </p>
             </div>
             <div>
-              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 italic">Episodes</p>
-              <p className="text-3xl font-black">{anime.episodes || '??'} <span className="text-xs font-bold text-gray-600 uppercase ml-1">Ep</span></p>
+              <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-2 italic">Episodes</p>
+              <p className="text-2xl font-black text-text">{anime.episodes || '??'} <span className="text-xs font-bold text-text-muted uppercase ml-1">Ep</span></p>
             </div>
             <div>
-              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 italic">Source</p>
-              <p className="text-xl font-black uppercase tracking-tighter italic text-gray-300">{anime.source}</p>
+              <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-2 italic">Season</p>
+              <p className="text-xl font-black uppercase tracking-tighter italic text-text-muted">{anime.season} {anime.seasonYear}</p>
             </div>
             <div>
-              <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-2 italic text-primary">IST Broadcast</p>
-              <p className="text-xl font-black text-white uppercase italic tracking-tighter">
-                {istInfo ? `${istInfo.day} · ${istInfo.time}` : 'Seasonal'}
+              <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-2 italic text-primary">Status</p>
+              <p className="text-xl font-black text-text uppercase italic tracking-tighter">
+                {anime.status}
               </p>
             </div>
           </div>
 
           <div className="mb-12">
-            <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-4 italic">Synopsis</p>
-            <p className="text-gray-300 leading-relaxed text-lg font-medium italic">
-              {anime.synopsis || "Explosive story details coming soon. Stay tuned for updates."}
+            <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-4 italic">Synopsis</p>
+            <p className="text-text leading-relaxed text-lg font-medium italic">
+              {stripHtml(anime.description) || "Explosive story details coming soon. Stay tuned for updates."}
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2 pt-6 border-t border-white/5">
-            {anime.genres?.map(g => (
-              <span key={g.mal_id} className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black text-gray-400 uppercase tracking-widest hover:border-primary/50 transition-colors cursor-default">
-                {g.name}
+          <div className="flex flex-wrap gap-2 mb-12">
+            {anime.genres?.map((genre, idx) => (
+              <span key={idx} className="px-4 py-2 bg-white/5 border border-border rounded-xl text-[10px] font-black text-text-muted uppercase tracking-widest hover:border-primary/50 transition-colors cursor-default">
+                {genre}
               </span>
             ))}
+          </div>
+
+          <div className="flex flex-wrap gap-4 pt-8 border-t border-border">
+             <button 
+               onClick={handleWatch}
+               className="px-8 py-4 bg-primary text-white font-black rounded-2xl flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 uppercase tracking-wider"
+             >
+               <Play className="w-5 h-5 fill-current" /> Watch Now
+             </button>
+             <button className="px-8 py-4 bg-white/5 border border-border text-text font-black rounded-2xl flex items-center gap-3 hover:bg-white/10 active:scale-95 transition-all uppercase tracking-wider">
+               <Heart className="w-5 h-5" /> Favorite
+             </button>
           </div>
         </div>
       </motion.div>

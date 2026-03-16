@@ -1,86 +1,128 @@
 import React, { useState, useEffect } from 'react';
 import Spotlight from '../components/Spotlight';
 import TrendingSection from '../components/TrendingSection';
-import RankingColumn from '../components/RankingColumn';
-import GenresSidebar from '../components/GenresSidebar';
-import { fetchWithRetry } from '../utils/api';
+import AnimeCard from '../components/AnimeCard';
+import { cacheFetch } from '../utils/api';
 
-export default function Home({ onOpenAnime }) {
-  const [loading, setLoading] = useState(true);
-  const [spotlightAnime, setSpotlightAnime] = useState([]);
+const HOME_QUERY = `
+query ($season: MediaSeason, $seasonYear: Int) {
+  trending: Page(page: 1, perPage: 10) {
+    media(type: ANIME, sort: TRENDING_DESC) {
+      ...mediaFields
+    }
+  }
+  popular: Page(page: 1, perPage: 10) {
+    media(type: ANIME, sort: POPULARITY_DESC) {
+      ...mediaFields
+    }
+  }
+  spotlight: Page(page: 1, perPage: 5) {
+    media(type: ANIME, sort: TRENDING_DESC, season: $season, seasonYear: $seasonYear) {
+      ...mediaFields
+    }
+  }
+}
+
+fragment mediaFields on Media {
+  id
+  title {
+    romaji
+    english
+    native
+  }
+  coverImage {
+    extraLarge
+    large
+  }
+  bannerImage
+  description
+  episodes
+  duration
+  status
+  season
+  seasonYear
+  averageScore
+  genres
+  type
+  format
+}
+`;
+
+export default function Home({ onOpenAnime, titleLang }) {
   const [trendingAnime, setTrendingAnime] = useState([]);
-  const [rankings, setRankings] = useState({
-    topAiring: [],
-    mostPopular: [],
-    mostFavorite: [],
-    completed: []
-  });
-  const [genres, setGenres] = useState([]);
+  const [popularAnime, setPopularAnime] = useState([]);
+  const [spotlightAnime, setSpotlightAnime] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchHomeData = async () => {
-      const delay = (ms) => new Promise(res => setTimeout(res, ms));
-      setLoading(true);
-      try {
-        const topData = await fetchWithRetry('https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=25');
-        const allTop = topData.data || [];
-        setSpotlightAnime(allTop.slice(0, 5));
-        setTrendingAnime(allTop.slice(5, 15));
-        const popular = allTop.slice(0, 5);
-
-        await delay(1500);
-        const genreData = await fetchWithRetry('https://api.jikan.moe/v4/genres/anime');
-        setGenres((genreData.data || []).slice(0, 24));
-
-        await delay(1500);
-        const fetchRank = async (filter) => {
-          try {
-            const data = await fetchWithRetry(`https://api.jikan.moe/v4/top/anime?filter=${filter}&limit=5`);
-            return data.data || [];
-          } catch (e) { return []; }
-        };
-
-        const airing = await fetchRank('airing');
-        await delay(1500);
-        const favorite = await fetchRank('favorite');
-        await delay(1500);
-        
-        let completedData = [];
-        try {
-          const resJson = await fetchWithRetry('https://api.jikan.moe/v4/anime?status=complete&order_by=score&sort=desc&limit=5');
-          completedData = resJson.data || [];
-        } catch (e) {}
-
-        setRankings({
-          topAiring: airing,
-          mostPopular: popular,
-          mostFavorite: favorite,
-          completed: completedData
-        });
-      } catch (err) {
-        console.error("Home Data Error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchHomeData();
   }, []);
 
+  const fetchHomeData = async () => {
+    try {
+      setLoading(true);
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      let season = 'WINTER';
+      if (month >= 3 && month <= 5) season = 'SPRING';
+      else if (month >= 6 && month <= 8) season = 'SUMMER';
+      else if (month >= 9 && month <= 11) season = 'FALL';
+
+      const res = await cacheFetch('https://graphql.anilist.co', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: HOME_QUERY,
+          variables: { season, seasonYear: year }
+        })
+      }, `anilist_home_${season}_${year}`);
+
+      if (res?.data?.data) {
+        setTrendingAnime(res.data.data.trending.media);
+        setPopularAnime(res.data.data.popular.media);
+        setSpotlightAnime(res.data.data.spotlight.media);
+      }
+    } catch (err) {
+      console.error("Error fetching AniList home data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-24">
-      <Spotlight anime={spotlightAnime[0]} onOpen={onOpenAnime} />
-      <TrendingSection animeList={trendingAnime} onOpen={onOpenAnime} />
+      <Spotlight animeList={spotlightAnime} onOpen={onOpenAnime} titleLang={titleLang} />
       
-      <div className="flex flex-col lg:flex-row gap-12">
-        <div className="flex-1">
-           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-8">
-             <RankingColumn title="Top Airing" animeList={rankings.topAiring} onOpen={onOpenAnime} loading={loading} />
-             <RankingColumn title="Most Popular" animeList={rankings.mostPopular} onOpen={onOpenAnime} loading={loading} />
-             <RankingColumn title="Most Favorite" animeList={rankings.mostFavorite} onOpen={onOpenAnime} loading={loading} />
-             <RankingColumn title="Completed" animeList={rankings.completed} onOpen={onOpenAnime} loading={loading} />
-           </div>
+      <TrendingSection animeList={trendingAnime} onOpen={onOpenAnime} titleLang={titleLang} />
+      
+      <div className="px-2">
+        <div className="flex items-center justify-between mb-10">
+          <h2 className="text-3xl font-black flex items-center gap-4 italic tracking-tighter uppercase group">
+            <span className="w-2.5 h-10 bg-secondary rounded-full group-hover:scale-y-110 transition-transform" />
+            Most Popular
+          </h2>
         </div>
-        <GenresSidebar genres={genres} />
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+          {popularAnime.map((anime, idx) => (
+            <AnimeCard 
+              key={anime.id} 
+              anime={anime} 
+              index={idx} 
+              onOpen={() => onOpenAnime(anime)} 
+              titleLang={titleLang}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
