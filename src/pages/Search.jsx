@@ -207,9 +207,9 @@ export default function Search({ onOpenAnime, titleLang }) {
   };
 
   return (
-    <div className="space-y-10 pb-20">
-      <div className="bg-card-bg/30 p-12 rounded-[2.5rem] border border-border backdrop-blur-3xl shadow-2xl">
-        <h3 className="text-xl font-black italic tracking-tighter uppercase flex items-center gap-3 text-text mb-10">
+    <div className="space-y-6 lg:space-y-10 pb-20">
+      <div className="bg-card-bg/30 p-6 lg:p-12 rounded-[1.5rem] lg:rounded-[2.5rem] border border-border backdrop-blur-3xl shadow-2xl">
+        <h3 className="text-lg lg:text-xl font-black italic tracking-tighter uppercase flex items-center gap-3 text-text mb-8 lg:text-text mb-10">
           <span className="w-2 h-6 bg-primary rounded-full" />
           Filter & Discover
         </h3>

@@ -83,23 +83,23 @@ export default function Schedule({ onOpenAnime, titleLang }) {
   );
 
   return (
-    <div className="px-2">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-8">
+    <div className="px-1 lg:px-2">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 lg:mb-12 gap-6 lg:gap-8">
         <div>
-          <h2 className="text-4xl font-black italic tracking-tighter uppercase gradient-text mb-2">
+          <h2 className="text-2xl lg:text-4xl font-black italic tracking-tighter uppercase gradient-text mb-1 lg:mb-2 text-center lg:text-left">
             Weekly Schedule
           </h2>
-          <p className="text-text-muted font-bold tracking-widest uppercase text-[10px]">
+          <p className="text-text-muted font-bold tracking-widest uppercase text-[8px] lg:text-[10px] text-center lg:text-left">
             Airing times in IST (Asia/Kolkata)
           </p>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto no-scrollbar py-2 bg-card-bg p-2 rounded-2xl border border-border">
+        <div className="flex gap-1.5 lg:gap-2 overflow-x-auto no-scrollbar py-2 bg-card-bg p-1.5 lg:p-2 rounded-xl lg:rounded-2xl border border-border">
           {days.map(day => (
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
-              className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all whitespace-nowrap ${
+              className={`px-4 lg:px-6 py-1.5 lg:py-2 rounded-lg lg:rounded-xl text-[10px] lg:text-xs font-black uppercase transition-all whitespace-nowrap ${
                 selectedDay === day 
                   ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105' 
                   : 'text-text-muted hover:bg-primary/10 hover:text-primary'

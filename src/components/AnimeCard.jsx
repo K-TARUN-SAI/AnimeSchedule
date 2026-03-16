@@ -87,24 +87,24 @@ export default function AnimeCard({ anime, index, onOpen, variant = 'grid', titl
         transition={{ delay: index * 0.03, duration: 0.4 }}
         whileHover={{ x: 5, scale: 1.01 }}
         onClick={onOpen}
-        className="group cursor-pointer flex flex-row bg-card-bg rounded-[2.5rem] overflow-hidden border border-border hover:border-primary/50 transition-all shadow-2xl h-[280px]"
+        className="group cursor-pointer flex flex-col md:flex-row bg-card-bg rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-border hover:border-primary/50 transition-all shadow-2xl min-h-[140px] h-auto"
       >
-        <div className="w-[180px] sm:w-[200px] h-full relative overflow-hidden flex-shrink-0">
+        <div className="w-full md:w-[220px] h-[180px] md:h-auto relative overflow-hidden flex-shrink-0">
           <img 
             src={anime.coverImage.extraLarge || anime.coverImage.large} 
             alt={getTitle()} 
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4">
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4 md:hidden">
              <h3 className="text-sm font-black leading-tight text-white drop-shadow-lg uppercase line-clamp-2">
                {getTitle()}
              </h3>
           </div>
         </div>
-        <div className="flex-grow p-8 flex flex-col justify-between overflow-hidden">
+        <div className="flex-grow p-4 md:p-8 flex flex-col justify-between overflow-hidden gap-4 md:gap-6 min-w-0">
           <div className="relative">
-            <div className="absolute -top-1 -right-2 transform translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500">
+            <div className="absolute -top-1 -right-2 transform translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 hidden md:block">
                <button 
                  onClick={handleWatch}
                  className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-light text-white rounded-2xl text-xs font-black uppercase tracking-tighter shadow-2xl shadow-primary/40 transition-all active:scale-95"
@@ -113,28 +113,36 @@ export default function AnimeCard({ anime, index, onOpen, variant = 'grid', titl
                  Watch Now
                </button>
             </div>
-             <div className="flex items-center gap-4 mb-6">
-               <h2 className="text-2xl font-black text-text uppercase italic tracking-tighter group-hover:text-primary transition-colors whitespace-nowrap overflow-hidden text-ellipsis max-w-[70%]">
+             <div className="flex items-center gap-4 mb-2 md:mb-6">
+               <h2 className="text-lg md:text-2xl font-black text-text uppercase italic tracking-tighter group-hover:text-primary transition-colors whitespace-nowrap overflow-hidden text-ellipsis max-w-full md:max-w-[75%]">
                  {getTitle()}
                </h2>
-               <div className="h-px flex-grow bg-border" />
+               <div className="h-px flex-grow bg-border hidden md:block" />
              </div>
-             <p className="text-text-muted text-sm line-clamp-3 leading-relaxed font-medium italic pr-24">
-               "{stripHtml(anime.description) || "No synopsis available."}"
+             <p className="text-text-muted text-[10px] md:text-sm line-clamp-2 md:line-clamp-3 leading-relaxed font-medium md:pr-24">
+               {stripHtml(anime.description) || "No synopsis available."}
              </p>
           </div>
-          <div className="flex items-end justify-between">
+          <div className="flex flex-wrap items-end justify-between gap-3 md:gap-4 mt-auto">
             <div className="flex flex-col">
-              <span className="text-[10px] text-text-muted font-bold uppercase tracking-widest mb-2 italic">Broadcast IST</span>
-              <div className="flex items-center gap-2.5 px-4 py-2 bg-white/5 rounded-2xl border border-border group-hover:border-primary/30 transition-colors">
-                <Clock className="w-4 h-4 text-primary" />
-                <span className="text-sm font-black text-text">
+              <span className="text-[8px] md:text-[10px] text-text-muted font-bold uppercase tracking-widest mb-1 md:mb-2 italic">Broadcast IST</span>
+              <div className="flex items-center gap-1.5 md:gap-2.5 px-3 md:px-4 py-1.5 md:py-2 bg-white/5 rounded-xl md:rounded-2xl border border-border group-hover:border-primary/30 transition-colors">
+                <Clock className="w-3 md:w-4 h-3 md:h-4 text-primary" />
+                <span className="text-[10px] md:text-sm font-black text-text whitespace-nowrap">
                   {istInfo ? `${istInfo.day} · ${istInfo.time}` : 'Upcoming'}
                 </span>
               </div>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-primary transition-all duration-500 group-hover:rotate-90">
-                <LayoutGrid className="w-6 h-6 text-white" />
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleWatch}
+                className="md:hidden flex items-center gap-2 px-3 py-1.5 bg-primary text-white rounded-lg text-[10px] font-black uppercase tracking-tighter shadow-lg shadow-primary/20"
+              >
+                Watch
+              </button>
+              <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-primary transition-all duration-500 group-hover:rotate-90">
+                  <LayoutGrid className="w-4 h-4 md:w-6 md:h-6 text-white" />
+              </div>
             </div>
           </div>
         </div>
