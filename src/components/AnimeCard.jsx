@@ -1,9 +1,12 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, LayoutGrid, Play, Star } from 'lucide-react';
 import { convertToIST } from '../utils/api';
 
 export default function AnimeCard({ anime, index, onOpen, variant = 'grid', titleLang = 'en' }) {
+  const [imgState, setImgState] = useState('loading'); // loading, low-res, high-res
+  const [highResLoaded, setHighResLoaded] = useState(false);
+
   // Helper to strip HTML tags from AniList descriptions
   const stripHtml = (html) => {
     if (!html) return '';
@@ -26,14 +29,54 @@ export default function AnimeCard({ anime, index, onOpen, variant = 'grid', titl
     window.open(`https://kaido.to/search?keyword=${query}`, '_blank');
   };
 
+  // Determine quality based on network
+  const getHighResSrc = () => {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (connection) {
+      if (connection.saveData) return anime.coverImage.large;
+      const effectiveType = connection.effectiveType;
+      if (effectiveType === 'slow-2g' || effectiveType === '2g' || effectiveType === '3g') {
+        return anime.coverImage.large;
+      }
+    }
+    return anime.coverImage.extraLarge || anime.coverImage.large;
+  };
+
+  const lowResSrc = anime.coverImage.medium || anime.coverImage.large;
+  const highResSrc = getHighResSrc();
+
   const content = (
     <div className="relative h-full w-full overflow-hidden">
-      <div className="h-3/4 w-full relative overflow-hidden">
+      <div className="h-3/4 w-full relative overflow-hidden bg-white/5">
+        {/* Skeleton Shimmer */}
+        {imgState === 'loading' && <div className="absolute inset-0 skeleton" />}
+        
+        {/* Low-res placeholder */}
         <img 
-          src={anime.coverImage.extraLarge || anime.coverImage.large} 
-          alt={getTitle()} 
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          src={lowResSrc} 
+          alt=""
+          className={`absolute inset-0 w-full h-full object-cover blur-md scale-110 transition-opacity duration-500 ${imgState !== 'loading' ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => imgState === 'loading' && setImgState('low-res')}
+          loading="lazy"
         />
+
+        {/* High-res image */}
+        <img 
+          src={highResSrc} 
+          alt={getTitle()} 
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${highResLoaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => {
+            setHighResLoaded(true);
+            setImgState('high-res');
+          }}
+          onError={(e) => {
+            if (e.target.src !== anime.coverImage.large) {
+              e.target.src = anime.coverImage.large;
+            }
+          }}
+          loading="lazy"
+        />
+
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
         
         <div className="absolute top-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0">
@@ -89,12 +132,28 @@ export default function AnimeCard({ anime, index, onOpen, variant = 'grid', titl
         onClick={onOpen}
         className="group cursor-pointer flex flex-col md:flex-row bg-card-bg rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-border hover:border-primary/50 transition-all shadow-2xl min-h-[140px] h-auto"
       >
-        <div className="w-full md:w-[220px] h-[180px] md:h-auto relative overflow-hidden flex-shrink-0">
+        <div className="w-full md:w-[220px] h-[180px] md:h-auto relative overflow-hidden flex-shrink-0 bg-white/5">
+          {imgState === 'loading' && <div className="absolute inset-0 skeleton" />}
+          
           <img 
-            src={anime.coverImage.extraLarge || anime.coverImage.large} 
-            alt={getTitle()} 
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            src={lowResSrc} 
+            alt=""
+            className={`absolute inset-0 w-full h-full object-cover blur-md scale-110 transition-opacity duration-500 ${imgState !== 'loading' ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => imgState === 'loading' && setImgState('low-res')}
+            loading="lazy"
           />
+
+          <img 
+            src={highResSrc} 
+            alt={getTitle()} 
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${highResLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => {
+              setHighResLoaded(true);
+              setImgState('high-res');
+            }}
+            loading="lazy"
+          />
+
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
           <div className="absolute bottom-4 left-4 right-4 md:hidden">
              <h3 className="text-sm font-black leading-tight text-white drop-shadow-lg uppercase line-clamp-2">

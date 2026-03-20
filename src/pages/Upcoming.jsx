@@ -3,9 +3,9 @@ import { cacheFetch } from '../utils/api';
 import AnimeCard from '../components/AnimeCard';
 
 const UPCOMING_QUERY = `
-query ($season: MediaSeason, $seasonYear: Int) {
+query ($season: MediaSeason, $seasonYear: Int, $isAdult: Boolean) {
   Page(page: 1, perPage: 20) {
-    media(type: ANIME, season: $season, seasonYear: $seasonYear, sort: TRENDING_DESC) {
+    media(type: ANIME, season: $season, seasonYear: $seasonYear, sort: TRENDING_DESC, isAdult: $isAdult) {
       id
       title {
         romaji
@@ -22,18 +22,19 @@ query ($season: MediaSeason, $seasonYear: Int) {
       averageScore
       genres
       type
+      isAdult
     }
   }
 }
 `;
 
-export default function Upcoming({ onOpenAnime, titleLang }) {
+export default function Upcoming({ onOpenAnime, titleLang, showAdult }) {
   const [animeList, setAnimeList] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchUpcoming();
-  }, []);
+  }, [showAdult]);
 
   const fetchUpcoming = async () => {
     try {
@@ -57,9 +58,9 @@ export default function Upcoming({ onOpenAnime, titleLang }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: UPCOMING_QUERY,
-          variables: { season, seasonYear: year }
+          variables: { season, seasonYear: year, isAdult: showAdult }
         })
-      }, `anilist_upcoming_${season}_${year}`);
+      }, `anilist_upcoming_${season}_${year}_${showAdult}`);
 
       if (res?.data?.data) {
         setAnimeList(res.data.data.Page.media);

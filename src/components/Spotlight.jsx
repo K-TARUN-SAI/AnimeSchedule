@@ -4,13 +4,16 @@ import { Play, Star, Clock, ChevronLeft, ChevronRight, Info, Calendar } from 'lu
 
 export default function Spotlight({ animeList, onOpen, titleLang = 'en' }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [bannerState, setBannerState] = useState('loading'); // loading, ready
 
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % animeList.length);
+    setBannerState('loading');
   }, [animeList.length]);
 
   const prevSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + animeList.length) % animeList.length);
+    setBannerState('loading');
   }, [animeList.length]);
 
   useEffect(() => {
@@ -44,10 +47,14 @@ export default function Spotlight({ animeList, onOpen, titleLang = 'en' }) {
           transition={{ duration: 1 }}
           className="absolute inset-0"
         >
+          {/* Skeleton Shimmer */}
+          {bannerState === 'loading' && <div className="absolute inset-0 skeleton" />}
+          
           <img 
             src={anime.bannerImage || anime.coverImage.extraLarge} 
             alt={getTitle(anime)}
-            className="absolute inset-0 w-full h-full object-cover"
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${bannerState === 'ready' ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setBannerState('ready')}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/60 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
@@ -87,7 +94,7 @@ export default function Spotlight({ animeList, onOpen, titleLang = 'en' }) {
                </span>
                <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
                <span className="flex items-center gap-2 text-yellow-500">
-                 <Star className="w-4 h-4 fill-current" /> {(anime.averageScore / 10).toFixed(1)}
+                 <Star className="w-4 h-4 fill-current" /> {anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'NR'}
                </span>
             </div>
             
@@ -103,7 +110,10 @@ export default function Spotlight({ animeList, onOpen, titleLang = 'en' }) {
                 onClick={() => onOpen(anime)}
                 className="px-10 py-5 bg-white/10 backdrop-blur-xl text-white font-black rounded-[2rem] hover:bg-white/20 active:scale-95 transition-all border border-white/10 text-lg uppercase tracking-wider flex items-center gap-3"
               >
-                <Info className="w-6 h-6" /> DETAIL
+                <span className="w-6 h-6 flex items-center justify-center">
+                  <Info className="w-5 h-5" />
+                </span>
+                DETAIL
               </button>
             </div>
           </motion.div>
@@ -134,7 +144,10 @@ export default function Spotlight({ animeList, onOpen, titleLang = 'en' }) {
         {animeList.map((_, idx) => (
           <button
             key={idx}
-            onClick={() => setCurrentIndex(idx)}
+            onClick={() => {
+              setCurrentIndex(idx);
+              setBannerState('loading');
+            }}
             className={`transition-all duration-500 rounded-full ${
               currentIndex === idx 
                 ? 'w-12 h-3 bg-primary shadow-lg shadow-primary/50' 

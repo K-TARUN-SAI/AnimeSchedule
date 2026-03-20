@@ -6,7 +6,7 @@ import { cacheFetch } from '../utils/api';
 import AnimeCard from '../components/AnimeCard';
 
 const SEARCH_QUERY = `
-query ($page: Int, $perPage: Int, $search: String, $genres: [String], $tags: [String], $format: [MediaFormat], $status: [MediaStatus], $season: MediaSeason, $seasonYear: Int, $score_greater: Int, $sort: [MediaSort]) {
+query ($page: Int, $perPage: Int, $search: String, $genres: [String], $tags: [String], $format: [MediaFormat], $status: [MediaStatus], $season: MediaSeason, $seasonYear: Int, $score_greater: Int, $sort: [MediaSort], $isAdult: Boolean) {
   Page(page: $page, perPage: $perPage) {
     pageInfo {
       total
@@ -15,7 +15,7 @@ query ($page: Int, $perPage: Int, $search: String, $genres: [String], $tags: [St
       lastPage
       hasNextPage
     }
-    media(type: ANIME, search: $search, genre_in: $genres, tag_in: $tags, format_in: $format, status_in: $status, season: $season, seasonYear: $seasonYear, averageScore_greater: $score_greater, sort: $sort) {
+    media(type: ANIME, search: $search, genre_in: $genres, tag_in: $tags, format_in: $format, status_in: $status, season: $season, seasonYear: $seasonYear, averageScore_greater: $score_greater, sort: $sort, isAdult: $isAdult) {
       id
       title {
         romaji
@@ -36,12 +36,13 @@ query ($page: Int, $perPage: Int, $search: String, $genres: [String], $tags: [St
       format
       season
       seasonYear
+      isAdult
     }
   }
 }
 `;
 
-export default function Search({ onOpenAnime, titleLang }) {
+export default function Search({ onOpenAnime, titleLang, showAdult }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryParam = searchParams.get('q') || '';
   const genresParam = searchParams.get('genres')?.split(',').filter(Boolean) || [];
@@ -105,10 +106,11 @@ export default function Search({ onOpenAnime, titleLang }) {
         season: seasonParam || undefined,
         seasonYear: yearParam ? parseInt(yearParam) : undefined,
         score_greater: scoreParam ? parseInt(scoreParam) : undefined,
-        sort: [sortParam]
+        sort: [sortParam],
+        isAdult: showAdult
       };
 
-      const cacheKey = `adv_search_v2_${JSON.stringify(variables)}`;
+      const cacheKey = `adv_search_v2_${JSON.stringify(variables)}_${showAdult}`;
       const res = await cacheFetch('https://graphql.anilist.co', {
         method: 'POST',
         body: JSON.stringify({ query: SEARCH_QUERY, variables })
@@ -125,12 +127,12 @@ export default function Search({ onOpenAnime, titleLang }) {
     } finally {
       setLoading(false);
     }
-  }, [queryParam, genresParam, formatParam, statusParam, scoreParam, seasonParam, yearParam, sortParam, page, officialGenres]);
+  }, [queryParam, genresParam, formatParam, statusParam, scoreParam, seasonParam, yearParam, sortParam, page, officialGenres, showAdult]);
 
   useEffect(() => {
     setPage(1);
     fetchResults(true);
-  }, [queryParam, searchParams.toString()]);
+  }, [queryParam, searchParams.toString(), showAdult]);
 
   const updateParam = (key, value) => {
     const newParams = new URLSearchParams(searchParams);

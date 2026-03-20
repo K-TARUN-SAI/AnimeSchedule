@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AnimeCard from '../components/AnimeCard';
 import { days, cacheFetch } from '../utils/api';
 
-export default function Schedule({ onOpenAnime, titleLang }) {
+export default function Schedule({ onOpenAnime, titleLang, showAdult }) {
   const [loading, setLoading] = useState(true);
   const [animeData, setAnimeData] = useState([]);
   const [selectedDay, setSelectedDay] = useState(days[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]);
@@ -30,6 +30,7 @@ export default function Schedule({ onOpenAnime, titleLang }) {
                       format
                       genres
                       status
+                      isAdult
                     }
                   }
                 }
@@ -76,10 +77,11 @@ export default function Schedule({ onOpenAnime, titleLang }) {
       }
     };
     fetchSchedule();
-  }, []);
+  }, [showAdult]);
 
   const filteredData = animeData.filter(anime => 
-    anime.istInfo.day.toLowerCase() === selectedDay.toLowerCase()
+    anime.istInfo.day.toLowerCase() === selectedDay.toLowerCase() &&
+    (showAdult ? anime.isAdult : !anime.isAdult)
   );
 
   return (

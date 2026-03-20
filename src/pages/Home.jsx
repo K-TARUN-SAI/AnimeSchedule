@@ -5,19 +5,19 @@ import AnimeCard from '../components/AnimeCard';
 import { cacheFetch } from '../utils/api';
 
 const HOME_QUERY = `
-query ($season: MediaSeason, $seasonYear: Int) {
+query ($season: MediaSeason, $seasonYear: Int, $isAdult: Boolean) {
   trending: Page(page: 1, perPage: 10) {
-    media(type: ANIME, sort: TRENDING_DESC) {
+    media(type: ANIME, sort: TRENDING_DESC, isAdult: $isAdult) {
       ...mediaFields
     }
   }
   popular: Page(page: 1, perPage: 10) {
-    media(type: ANIME, sort: POPULARITY_DESC) {
+    media(type: ANIME, sort: POPULARITY_DESC, isAdult: $isAdult) {
       ...mediaFields
     }
   }
   spotlight: Page(page: 1, perPage: 5) {
-    media(type: ANIME, sort: TRENDING_DESC, season: $season, seasonYear: $seasonYear) {
+    media(type: ANIME, sort: TRENDING_DESC, season: $season, seasonYear: $seasonYear, isAdult: $isAdult) {
       ...mediaFields
     }
   }
@@ -45,10 +45,11 @@ fragment mediaFields on Media {
   genres
   type
   format
+  isAdult
 }
 `;
 
-export default function Home({ onOpenAnime, titleLang }) {
+export default function Home({ onOpenAnime, titleLang, showAdult }) {
   const [trendingAnime, setTrendingAnime] = useState([]);
   const [popularAnime, setPopularAnime] = useState([]);
   const [spotlightAnime, setSpotlightAnime] = useState([]);
@@ -56,7 +57,7 @@ export default function Home({ onOpenAnime, titleLang }) {
 
   useEffect(() => {
     fetchHomeData();
-  }, []);
+  }, [showAdult]);
 
   const fetchHomeData = async () => {
     try {
@@ -74,9 +75,9 @@ export default function Home({ onOpenAnime, titleLang }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: HOME_QUERY,
-          variables: { season, seasonYear: year }
+          variables: { season, seasonYear: year, isAdult: showAdult }
         })
-      }, `anilist_home_${season}_${year}`);
+      }, `anilist_home_${season}_${year}_${showAdult}`);
 
       if (res?.data?.data) {
         setTrendingAnime(res.data.data.trending.media);

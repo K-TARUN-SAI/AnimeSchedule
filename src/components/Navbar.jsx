@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Flame, Clock, Calendar, Sun, Moon, Globe, Search } from 'lucide-react';
 
-export default function Navbar({ theme, toggleTheme, titleLang, toggleLang }) {
+export default function Navbar({ theme, toggleTheme, titleLang, toggleLang, showAdult, toggleAdult }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchFocused, setSearchFocused] = useState(false);
@@ -67,7 +67,7 @@ export default function Navbar({ theme, toggleTheme, titleLang, toggleLang }) {
               key={link.to}
               to={link.to}
               className={`px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg lg:rounded-xl text-[10px] lg:text-xs font-black uppercase transition-all flex items-center gap-2 whitespace-nowrap ${
-                location.pathname === link.path 
+                location.pathname === link.path && (!link.search || location.search === link.search)
                   ? `bg-${link.color || 'primary'} text-white shadow-lg shadow-${link.color || 'primary'}/30` 
                   : `hover:bg-${link.color || 'primary'}/10 hover:text-${link.color || 'primary'}`
               }`}
@@ -78,6 +78,16 @@ export default function Navbar({ theme, toggleTheme, titleLang, toggleLang }) {
         </div>
 
         <div className="flex gap-1 lg:gap-2 p-1 lg:p-1.5 bg-card-bg rounded-xl lg:rounded-2xl border border-border">
+           <button 
+             onClick={toggleAdult}
+             className={`flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg lg:rounded-xl transition-all group ${showAdult ? 'bg-red-500/10 text-red-500' : 'hover:bg-primary/10'}`}
+             title="Toggle Adult Content"
+           >
+             <span className={`text-[9px] lg:text-[10px] font-black uppercase ${showAdult ? 'text-red-500' : 'group-hover:text-primary'}`}>18+</span>
+           </button>
+
+           <div className="w-px h-5 lg:h-6 bg-border mx-0.5 lg:mx-1" />
+
            <button 
              onClick={toggleLang}
              className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 hover:bg-primary/10 rounded-lg lg:rounded-xl transition-all group"

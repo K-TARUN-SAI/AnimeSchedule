@@ -13,6 +13,7 @@ export default function App() {
   const [selectedAnime, setSelectedAnime] = useState(null);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const [titleLang, setTitleLang] = useState(localStorage.getItem('titleLang') || 'en');
+  const [showAdult, setShowAdult] = useState(localStorage.getItem('showAdult') === 'true');
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
@@ -27,8 +28,13 @@ export default function App() {
     localStorage.setItem('titleLang', titleLang);
   }, [titleLang]);
 
+  useEffect(() => {
+    localStorage.setItem('showAdult', showAdult);
+  }, [showAdult]);
+
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   const toggleLang = () => setTitleLang(prev => prev === 'en' ? 'jp' : 'en');
+  const toggleAdult = () => setShowAdult(prev => !prev);
 
   return (
     <Router>
@@ -39,14 +45,16 @@ export default function App() {
             toggleTheme={toggleTheme} 
             titleLang={titleLang} 
             toggleLang={toggleLang} 
+            showAdult={showAdult}
+            toggleAdult={toggleAdult}
           />
 
           <main>
             <Routes>
-              <Route path="/" element={<Home onOpenAnime={setSelectedAnime} titleLang={titleLang} />} />
-              <Route path="/upcoming" element={<Upcoming onOpenAnime={setSelectedAnime} titleLang={titleLang} />} />
-              <Route path="/schedule" element={<Schedule onOpenAnime={setSelectedAnime} titleLang={titleLang} />} />
-              <Route path="/search" element={<Search onOpenAnime={setSelectedAnime} titleLang={titleLang} />} />
+              <Route path="/" element={<Home onOpenAnime={setSelectedAnime} titleLang={titleLang} showAdult={showAdult} />} />
+              <Route path="/upcoming" element={<Upcoming onOpenAnime={setSelectedAnime} titleLang={titleLang} showAdult={showAdult} />} />
+              <Route path="/schedule" element={<Schedule onOpenAnime={setSelectedAnime} titleLang={titleLang} showAdult={showAdult} />} />
+              <Route path="/search" element={<Search onOpenAnime={setSelectedAnime} titleLang={titleLang} showAdult={showAdult} />} />
             </Routes>
           </main>
         </div>
